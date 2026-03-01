@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 from contextlib import asynccontextmanager
 from sqlalchemy.orm import Session
-
+from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import engine, Base, SessionLocal
 
@@ -49,7 +49,19 @@ app = FastAPI(
     debug=settings.debug,
     lifespan=lifespan,
 )
+origins = [
+    "http://localhost:5173",
+    "https://demo-qze7.onrender.com",  # opcional
+]
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+    
 # Static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
