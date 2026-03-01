@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Clientes{% endblock %}
+{% block topbar_title %}Clientes{% endblock %}
+
+{% block topbar_actions %}
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoCliente">
+    <i class="bi bi-plus-lg me-1"></i> Nuevo cliente
+  </button>
+{% endblock %}
+
+{% block content %}
+
+{% if msg %}
+<div class="alert alert-{{ msg_type }} alert-dismissible fade show mb-4">
+  {{ msg }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+
+<div class="card fade-up">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <span><i class="bi bi-people-fill me-2" style="color:var(--accent)"></i>
+    Todos los clientes
+    <span class="ms-2 text-muted mono" style="font-size:12px;">{{ clientes|length }}</span>
+    </span>
+    <!-- Search -->
+    <input
+      type="text"
+      id="searchInput"
+      class="form-control"
+      placeholder="Buscar..."
+      style="max-width:220px; padding:6px 12px;"
+      oninput="filterTable()"
+    />
+  </div>
+
+  {% if clientes %}
+  <div class="table-responsive">
+    <table class="table mb-0" id="clientesTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Teléfono</th>
+          <th>Estado</th>
+          <th>Registrado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in clientes %}
+        <tr>
+          <td class="mono text-muted">{{ c.id }}</td>
+          <td><span class="fw-500">{{ c.nombre }}</span></td>
+          <td class="text-muted">{{ c.email }}</td>
+          <td class="text-muted">{{ c.telefono or '—' }}</td>
+          <td>
+            {% if c.activo %}
+              <span class="badge-status badge-completed">Activo</span>
+            {% else %}
+              <span class="badge-status badge-pending">Inactivo</span>
+            {% endif %}
+          </td>
+          <td class="text-muted" style="font-size:13px;">
+            {{ c.creado_en.strftime('%d %b %Y') }}
+          </td>
+          <td class="text-end">
+            <button
+              class="btn-ghost danger"
+              title="Eliminar"
+              onclick="confirmarEliminar({{ c.id }}, '{{ c.nombre }}')"
+            ><i class="bi bi-trash3"></i></button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="bi bi-people d-block"></i>
+    <p>No hay clientes registrados.</p>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoCliente">
+      Agregar primero
+    </button>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── Modal: Nuevo cliente ──────────────────────────────────────── -->
+<div class="modal fade" id="modalNuevoCliente" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="/views/clientes">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Nuevo cliente</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" style="padding:24px;">
+          <div class="mb-3">
+            <label class="form-label">Nombre completo</label>
+            <input type="text" name="nombre" class="form-control" placeholder="Ej: María García" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" placeholder="correo@ejemplo.com" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Teléfono <span class="text-muted">(opcional)</span></label>
+            <input type="text" name="telefono" class="form-control" placeholder="555-0000" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg me-1"></i>Guardar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Confirmar eliminación ─────────────────────────────── -->
+<div class="modal fade" id="modalEliminar" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" style="color:var(--danger)">
+          <i class="bi bi-exclamation-triangle me-2"></i>Eliminar
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center" style="padding:24px 20px;">
+        <p style="font-size:14px;" class="mb-0">¿Eliminar a <strong id="nombreEliminar"></strong>?<br>
+        <span class="text-muted" style="font-size:13px;">Esta acción no se puede deshacer.</span></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+        <form id="formEliminar" method="POST">
+          <input type="hidden" name="_method" value="DELETE" />
+          <button type="submit" class="btn btn-sm" style="background:var(--danger);color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:13px;">
+            Eliminar
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmarEliminar(id, nombre) {
+  document.getElementById('nombreEliminar').textContent = nombre;
+  document.getElementById('formEliminar').action = '/views/clientes/' + id + '/eliminar';
+  new bootstrap.Modal(document.getElementById('modalEliminar')).show();
+}
+
+function filterTable() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  document.querySelectorAll('#clientesTable tbody tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

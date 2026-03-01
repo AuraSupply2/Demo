@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block topbar_title %}Dashboard{% endblock %}
+
+{% block topbar_actions %}
+  <span class="text-muted mono" style="font-size:12px;">
+    <i class="bi bi-circle-fill" style="color:var(--accent-2);font-size:8px;"></i>
+    Sistema activo
+  </span>
+{% endblock %}
+
+{% block content %}
+<!-- ── Stat cards ───────────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+
+  <div class="col-sm-6 col-xl-3 fade-up">
+    <div class="stat-card accent">
+      <div class="stat-icon accent"><i class="bi bi-activity"></i></div>
+      <div class="stat-value">{{ data.pedidos_activos }}</div>
+      <div class="stat-label">Pedidos activos</div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3 fade-up fade-up-1">
+    <div class="stat-card warn">
+      <div class="stat-icon warn"><i class="bi bi-hourglass-split"></i></div>
+      <div class="stat-value">{{ data.pedidos_pendientes }}</div>
+      <div class="stat-label">Pendientes de inicio</div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3 fade-up fade-up-2">
+    <div class="stat-card green">
+      <div class="stat-icon green"><i class="bi bi-currency-dollar"></i></div>
+      <div class="stat-value">${{ "%.2f"|format(data.total_facturado) }}</div>
+      <div class="stat-label">Total facturado</div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3 fade-up fade-up-3">
+    <div class="stat-card danger">
+      <div class="stat-icon danger"><i class="bi bi-people"></i></div>
+      <div class="stat-value">{{ total_clientes }}</div>
+      <div class="stat-label">Clientes registrados</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Últimos pedidos ──────────────────────────────────────────── -->
+<div class="row g-3">
+  <div class="col-12 fade-up fade-up-4">
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="bi bi-clock-history me-2" style="color:var(--accent)"></i>Últimos pedidos</span>
+        <a href="/views/pedidos" class="btn btn-outline-secondary btn-sm">Ver todos</a>
+      </div>
+
+      {% if data.ultimos_pedidos %}
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Cliente</th>
+              <th>Descripción</th>
+              <th>Precio</th>
+              <th>Estado</th>
+              <th>Creado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in data.ultimos_pedidos %}
+            <tr>
+              <td class="mono text-muted">#{{ p.id }}</td>
+              <td><span class="fw-500">{{ p.cliente_nombre }}</span></td>
+              <td style="max-width:260px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                {{ p.descripcion }}
+              </td>
+              <td class="mono">${{ "%.2f"|format(p.precio) }}</td>
+              <td>
+                <span class="badge-status badge-{{ p.status }}">
+                  {% if p.status == 'pending' %}Pendiente
+                  {% elif p.status == 'in_progress' %}En progreso
+                  {% elif p.status == 'completed' %}Completado
+                  {% else %}Entregado{% endif %}
+                </span>
+              </td>
+              <td class="text-muted" style="font-size:13px;">
+                {{ p.creado_en.strftime('%d %b, %H:%M') }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="bi bi-inbox d-block"></i>
+        <p>No hay pedidos registrados aún.</p>
+        <a href="/views/pedidos" class="btn btn-primary btn-sm">Crear primer pedido</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iniciar sesión — Negocio Demo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg:      #0f1117;
+      --surface: #181b23;
+      --border:  #272b38;
+      --accent:  #4f6ef7;
+      --text:    #e8eaf0;
+      --muted:   #6b7280;
+      --danger:  #f75f5f;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* subtle grid pattern */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: .35;
+      pointer-events: none;
+    }
+
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+      position: relative;
+      animation: fadeUp .4s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(16px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .logo-mark {
+      width: 44px; height: 44px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      margin: 0 auto 20px;
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+
+    .form-label { font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+
+    .form-control {
+      background: #1e2130;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      transition: border-color .15s;
+    }
+    .form-control:focus {
+      background: #1e2130;
+      border-color: var(--accent);
+      color: var(--text);
+      box-shadow: 0 0 0 3px rgba(79,110,247,.15);
+    }
+    .form-control::placeholder { color: var(--muted); }
+
+    .btn-login {
+      width: 100%;
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 11px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+      margin-top: 20px;
+    }
+    .btn-login:hover { opacity: .88; transform: translateY(-1px); }
+
+    .alert-danger {
+      background: rgba(247,95,95,.1);
+      color: var(--danger);
+      border: 1px solid rgba(247,95,95,.2);
+      border-radius: 8px;
+      font-size: 13px;
+      padding: 10px 14px;
+      margin-bottom: 20px;
+    }
+
+    .demo-hint {
+      margin-top: 24px;
+      padding: 12px 14px;
+      background: rgba(79,110,247,.07);
+      border: 1px solid rgba(79,110,247,.15);
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+    }
+    .demo-hint strong { color: #a0aec0; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="logo-mark">N</div>
+    <h1>Negocio Demo</h1>
+    <p class="subtitle">Sistema de gestión</p>
+
+    {% if error %}
+    <div class="alert-danger">
+      <i class="bi bi-exclamation-circle me-1"></i>{{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/login">
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input
+          type="email"
+          name="email"
+          class="form-control"
+          placeholder="admin@demo.com"
+          value="{{ email or '' }}"
+          required
+          autofocus
+        />
+      </div>
+      <div class="mb-1">
+        <label class="form-label">Contraseña</label>
+        <input
+          type="password"
+          name="password"
+          class="form-control"
+          placeholder="••••••••"
+          required
+        />
+      </div>
+      <button type="submit" class="btn-login">
+        Iniciar sesión
+      </button>
+    </form>
+
+    <div class="demo-hint">
+      <strong>Demo:</strong><br>
+      email: admin@demo.com<br>
+      pass: &nbsp;admin123
+    </div>
+  </div>
+</body>
+</html>

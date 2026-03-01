@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Pedidos{% endblock %}
+{% block topbar_title %}Pedidos{% endblock %}
+
+{% block topbar_actions %}
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoPedido">
+    <i class="bi bi-plus-lg me-1"></i> Nuevo pedido
+  </button>
+{% endblock %}
+
+{% block content %}
+
+{% if msg %}
+<div class="alert alert-{{ msg_type }} alert-dismissible fade show mb-4">
+  {{ msg }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+
+<!-- ── Filtro de estado ──────────────────────────────────────────── -->
+<div class="d-flex gap-2 mb-4 flex-wrap fade-up">
+  {% set estados = [('', 'Todos'), ('pending', 'Pendiente'), ('in_progress', 'En progreso'), ('completed', 'Completado'), ('delivered', 'Entregado')] %}
+  {% for val, label in estados %}
+  <a
+    href="/views/pedidos{% if val %}?status={{ val }}{% endif %}"
+    class="btn btn-sm {% if status_filter == val %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+  >{{ label }}</a>
+  {% endfor %}
+</div>
+
+<!-- ── Tabla ─────────────────────────────────────────────────────── -->
+<div class="card fade-up fade-up-1">
+  <div class="card-header">
+    <i class="bi bi-bag-fill me-2" style="color:var(--accent)"></i>
+    Pedidos
+    <span class="ms-2 text-muted mono" style="font-size:12px;">{{ pedidos|length }}</span>
+  </div>
+
+  {% if pedidos %}
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Cliente</th>
+          <th>Descripción</th>
+          <th>Precio</th>
+          <th>Estado</th>
+          <th>Creado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in pedidos %}
+        <tr>
+          <td class="mono text-muted">#{{ p.id }}</td>
+          <td><span class="fw-500">{{ p.cliente.nombre }}</span></td>
+          <td style="max-width:280px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            {{ p.descripcion }}
+          </td>
+          <td class="mono">${{ "%.2f"|format(p.precio) }}</td>
+          <td>
+            <button
+              class="badge-status badge-{{ p.status }} border-0 cursor-pointer"
+              style="cursor:pointer;"
+              title="Cambiar estado"
+              onclick="abrirCambioEstado({{ p.id }}, '{{ p.status }}')"
+            >
+              {% if p.status == 'pending' %}Pendiente
+              {% elif p.status == 'in_progress' %}En progreso
+              {% elif p.status == 'completed' %}Completado
+              {% else %}Entregado{% endif %}
+              <i class="bi bi-pencil-fill ms-1" style="font-size:9px;"></i>
+            </button>
+          </td>
+          <td class="text-muted" style="font-size:13px;">
+            {{ p.creado_en.strftime('%d %b, %H:%M') }}
+          </td>
+          <td class="text-end">
+            <button
+              class="btn-ghost danger"
+              title="Eliminar"
+              onclick="confirmarEliminar({{ p.id }})"
+            ><i class="bi bi-trash3"></i></button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="bi bi-bag d-block"></i>
+    <p>No hay pedidos{% if status_filter %} con este estado{% endif %}.</p>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoPedido">
+      Crear primer pedido
+    </button>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── Modal: Nuevo pedido ───────────────────────────────────────── -->
+<div class="modal fade" id="modalNuevoPedido" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="/views/pedidos">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-bag-plus me-2"></i>Nuevo pedido</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" style="padding:24px;">
+          <div class="mb-3">
+            <label class="form-label">Cliente</label>
+            <select name="cliente_id" class="form-select" required>
+              <option value="" disabled selected>Seleccionar cliente...</option>
+              {% for c in clientes %}
+              <option value="{{ c.id }}">{{ c.nombre }} — {{ c.email }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Descripción</label>
+            <textarea name="descripcion" class="form-control" rows="3"
+              placeholder="Detalle del servicio o producto..." required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Precio</label>
+            <div class="input-group">
+              <span class="input-group-text" style="background:var(--surface-2);border-color:var(--border);color:var(--muted);">$</span>
+              <input type="number" name="precio" class="form-control" placeholder="0.00" step="0.01" min="0" required />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg me-1"></i>Crear pedido
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Cambiar estado ─────────────────────────────────────── -->
+<div class="modal fade" id="modalEstado" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <form id="formEstado" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-arrow-repeat me-2"></i>Cambiar estado</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" style="padding:20px 24px;">
+          <label class="form-label">Nuevo estado</label>
+          <select name="status" id="selectEstado" class="form-select">
+            <option value="pending">Pendiente</option>
+            <option value="in_progress">En progreso</option>
+            <option value="completed">Completado</option>
+            <option value="delivered">Entregado</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Confirmar eliminación ─────────────────────────────── -->
+<div class="modal fade" id="modalEliminar" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" style="color:var(--danger)">
+          <i class="bi bi-exclamation-triangle me-2"></i>Eliminar pedido
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center" style="padding:24px 20px;">
+        <p style="font-size:14px;" class="mb-0">¿Eliminar este pedido?<br>
+        <span class="text-muted" style="font-size:13px;">Esta acción no se puede deshacer.</span></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+        <form id="formEliminar" method="POST">
+          <button type="submit" class="btn btn-sm" style="background:var(--danger);color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:13px;">
+            Eliminar
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function abrirCambioEstado(id, statusActual) {
+  document.getElementById('formEstado').action = '/views/pedidos/' + id + '/status';
+  document.getElementById('selectEstado').value = statusActual;
+  new bootstrap.Modal(document.getElementById('modalEstado')).show();
+}
+
+function confirmarEliminar(id) {
+  document.getElementById('formEliminar').action = '/views/pedidos/' + id + '/eliminar';
+  new bootstrap.Modal(document.getElementById('modalEliminar')).show();
+}
+</script>
+{% endblock %}
